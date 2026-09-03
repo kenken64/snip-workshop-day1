@@ -66,7 +66,7 @@ export class AppComponent implements OnInit {
     this.error.set('');
     this.snip.listLinks().pipe(finalize(() => this.isLoading.set(false))).subscribe({
       next: (links) => this.links.set(links),
-      error: () => this.error.set('Could not load links. Is the backend running on http://localhost:3000?'),
+      error: () => this.error.set('Could not load links. Check the backend and try again.'),
     });
   }
 

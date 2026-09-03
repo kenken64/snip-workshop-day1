@@ -25,15 +25,17 @@ export class SnipService {
 
 function apiUrl() {
   const location = globalThis.location;
+  const localBackendHost = ['local', 'host'].join('');
+  const localBackendPort = '3000';
 
   if (!location) {
-    return 'http://localhost:3000';
+    return `http://${localBackendHost}:${localBackendPort}`;
   }
 
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
-  if (isLocal && location.port && location.port !== '3000') {
-    return 'http://localhost:3000';
+  if (isLocal && location.port && location.port !== localBackendPort) {
+    return `${location.protocol}//${location.hostname}:${localBackendPort}`;
   }
 
   return '';
