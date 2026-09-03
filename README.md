@@ -11,11 +11,14 @@ snip-demo/
 ├── backend/   Bun API server mounted from branch backend
 ├── frontend/  Angular app mounted from branch frontend
 ├── cli/       Node CLI mounted from branch cli
+├── bundle/    Generated release mounted from branch bundle
+├── scripts/   Superproject automation
 ├── .gitmodules
 └── README.md
 ```
 
 Each folder is a gitlink pinned to an exact commit. `.gitmodules` records the path, repository URL, and branch each submodule tracks.
+`bundle/` is generated output. Do not hand-edit files inside it; update the source branches and rebuild it instead.
 
 ## API Contract
 
@@ -69,6 +72,13 @@ node cli.js add https://example.com
 
 The frontend and CLI expect the backend at `http://localhost:3000`. Set `SNIP_API` for the CLI if the backend runs somewhere else.
 
+Run the generated bundle as one Bun process:
+
+```sh
+cd bundle
+bun start
+```
+
 ## Update Workflow
 
 Submodule content and superproject pointers are separate commits. After editing one layer, commit and push from inside that submodule, then update the pointer on `main`.
@@ -87,4 +97,12 @@ git commit -m "Bump backend submodule"
 git push
 ```
 
-Use the same flow for `frontend` and `cli`. The superproject stays a pinned, reproducible snapshot of the three layers.
+Use the same flow for `frontend` and `cli`. The superproject stays a pinned, reproducible snapshot of the three source layers.
+
+To refresh the generated release branch, run:
+
+```sh
+node scripts/build-bundle.mjs --push
+```
+
+The script updates source submodules, builds the Angular app, assembles `bundle/`, commits generated output only when files changed, and pushes the `bundle` branch plus the resulting `main` pointer when `--push` is present.
