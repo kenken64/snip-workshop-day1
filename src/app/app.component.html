@@ -1,0 +1,75 @@
+<main class="shell">
+  <section class="hero" aria-labelledby="page-title">
+    <p class="eyebrow">Snip URL Shortener</p>
+    <h1 id="page-title">Short links for long URLs</h1>
+    <p class="lede">Paste a link, get a compact redirect, and keep an eye on hits from the same tiny backend.</p>
+
+    <form class="shorten-form" (ngSubmit)="createLink()" novalidate>
+      <label for="url">URL to shorten</label>
+      <div class="input-row">
+        <input
+          id="url"
+          name="url"
+          type="url"
+          [ngModel]="url()"
+          (ngModelChange)="url.set($event)"
+          placeholder="https://example.com/very/long/link"
+          autocomplete="url"
+          [class.invalid]="isInvalidUrl()"
+        />
+        <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Saving...' : 'Shorten' }}</button>
+      </div>
+      @if (isInvalidUrl()) {
+        <p class="field-error">Use a URL that starts with http:// or https://.</p>
+      }
+    </form>
+
+    @if (latestLink()) {
+      <div class="notice success">
+        <span>Short link created</span>
+        <a [href]="latestLink()?.shortUrl" target="_blank" rel="noreferrer">{{ latestLink()?.shortUrl }}</a>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="notice error">{{ error() }}</div>
+    }
+  </section>
+
+  <section class="links-panel" aria-labelledby="links-title">
+    <div class="panel-header">
+      <div>
+        <p class="eyebrow">Archive</p>
+        <h2 id="links-title">All links</h2>
+      </div>
+      <button class="secondary" type="button" (click)="refreshLinks()" [disabled]="isLoading()">
+        {{ isLoading() ? 'Loading...' : 'Refresh' }}
+      </button>
+    </div>
+
+    @if (links().length) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Original URL</th>
+              <th>Hits</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (link of links(); track link.code) {
+              <tr>
+                <td><a class="code" [href]="link.shortUrl" target="_blank" rel="noreferrer">{{ link.code }}</a></td>
+                <td><a class="original" [href]="link.url" target="_blank" rel="noreferrer">{{ link.url }}</a></td>
+                <td>{{ link.hits }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="empty">No links yet.</p>
+    }
+  </section>
+</main>

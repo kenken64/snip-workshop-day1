@@ -1,0 +1,12 @@
+html {
+	min-height: 100%;
+	background:
+		radial-gradient(circle at top left, rgba(255, 188, 112, 0.35), transparent 34rem),
+		linear-gradient(135deg, #f7fbf4 0%, #eef7f0 48%, #f8f4e9 100%);
+}
+
+body {
+	min-height: 100%;
+	margin: 0;
+	font-family: Avenir Next, Avenir, Segoe UI, sans-serif;
+}
