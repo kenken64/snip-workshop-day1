@@ -12,7 +12,7 @@ export interface SnipLink {
 @Injectable({ providedIn: 'root' })
 export class SnipService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000';
+  private readonly apiUrl = apiUrl();
 
   listLinks() {
     return this.http.get<SnipLink[]>(`${this.apiUrl}/api/links`);
@@ -21,4 +21,20 @@ export class SnipService {
   createLink(url: string) {
     return this.http.post<SnipLink>(`${this.apiUrl}/api/links`, { url });
   }
+}
+
+function apiUrl() {
+  const location = globalThis.location;
+
+  if (!location) {
+    return 'http://localhost:3000';
+  }
+
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+  if (isLocal && location.port && location.port !== '3000') {
+    return 'http://localhost:3000';
+  }
+
+  return '';
 }
