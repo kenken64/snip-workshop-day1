@@ -4,7 +4,7 @@ const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const PORT = Number.parseInt(Bun.env.PORT || "3000", 10);
 const PUBLIC_DIR = Bun.env.PUBLIC_DIR;
 
-function resolveBaseUrl() {
+function configuredBaseUrl() {
   if (Bun.env.BASE_URL) {
     return Bun.env.BASE_URL.replace(/\/$/, "");
   }
@@ -13,10 +13,10 @@ function resolveBaseUrl() {
     return `https://${Bun.env.RAILWAY_PUBLIC_DOMAIN}`;
   }
 
-  return `http://localhost:${PORT}`;
+  return "";
 }
 
-const BASE_URL = resolveBaseUrl();
+const CONFIGURED_BASE_URL = configuredBaseUrl();
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,6 +71,26 @@ function isHttpUrl(value) {
   } catch {
     return false;
   }
+}
+
+function shortUrlOrigin(request) {
+  if (CONFIGURED_BASE_URL) {
+    return CONFIGURED_BASE_URL;
+  }
+
+  const requestUrl = new URL(request.url);
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+
+  if (forwardedHost) {
+    return `${forwardedProto || "https"}://${forwardedHost}`.replace(/\/$/, "");
+  }
+
+  if (requestUrl.hostname !== "localhost" && requestUrl.hostname !== "127.0.0.1") {
+    return requestUrl.origin;
+  }
+
+  return `http://localhost:${PORT}`;
 }
 
 function contentTypeFor(pathname) {
@@ -139,7 +159,7 @@ const server = Bun.serve({
       const link = {
         code,
         url: body.url,
-        shortUrl: `${BASE_URL}/${code}`,
+        shortUrl: `${shortUrlOrigin(request)}/${code}`,
         hits: 0,
         createdAt: new Date().toISOString(),
       };
