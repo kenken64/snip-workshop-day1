@@ -2,7 +2,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { cp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -72,7 +72,10 @@ async function assembleBundle() {
   await cp(join(cliDir, 'cli.js'), join(bundleDir, 'cli.js'));
   await cp(frontendOutput, join(bundleDir, 'public'), { recursive: true });
 
-  await writeFile(join(bundleDir, '.env'), 'PUBLIC_DIR=./public\n');
+  const backendEnvPath = join(backendDir, '.env');
+  const backendEnv = existsSync(backendEnvPath) ? (await readFile(backendEnvPath, 'utf8')).trimEnd() : '';
+  const bundleEnvLines = [...(backendEnv ? [backendEnv] : []), 'PUBLIC_DIR=./public'];
+  await writeFile(join(bundleDir, '.env'), `${bundleEnvLines.join('\n')}\n`);
   await writeFile(join(bundleDir, 'package.json'), `${JSON.stringify({
     name: 'snip-bundle',
     scripts: {
