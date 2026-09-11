@@ -8,9 +8,10 @@ if (!__ENV.BASE_URL) {
 }
 export const BASE_URL = __ENV.BASE_URL.replace(/\/+$/, '');
 
-// Real long URLs to shorten during the test. The backend stores links in an
-// in-memory Map (cleared on every restart/redeploy), so we always POST these
-// fresh rather than depending on any previously generated short code.
+// Real long URLs to shorten during the test. The backend persists links in
+// SQLite (they survive restarts/redeploys now), so we always POST these
+// fresh rather than depending on any specific previously generated code -
+// codes from earlier runs may still exist, but we never rely on which ones.
 export const SEED_URLS = [
   'https://railway.com/project/702e0a73-9ffa-4fef-83fc-93f5729ce6f5/service/1c403496-753b-41ce-9d7a-48e49d0481a9/settings?environmentId=7e0fad9c-cdbd-4c82-8630-396e1cbb72a9',
   'https://outlook.cloud.microsoft/mail/inbox/id/AAQkAGNkYjk2OWU1LWExZmYtNDY0MS05YjA4LTk1MTBlOGQwZWU0NAAQAEnSfCSOKZhPix3TxPd5dLo%3D',

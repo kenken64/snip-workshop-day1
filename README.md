@@ -1,6 +1,6 @@
 # Snip
 
-Snip is a tiny URL shortener that demonstrates one backend with two different clients. The Bun API stores links in memory, the Angular web app calls that API from the browser, and the Node CLI uses the same contract from a terminal.
+Snip is a tiny URL shortener that demonstrates one backend with two different clients. The Bun API stores links in SQLite, the Angular web app calls that API from the browser, and the Node CLI uses the same contract from a terminal.
 
 This `main` branch is the superproject. The application layers live on separate orphan branches in this same repository and are mounted here as submodules.
 
@@ -28,7 +28,7 @@ Each folder is a gitlink pinned to an exact commit. `.gitmodules` records the pa
 | GET | `/api/links` | | `200` array of links | |
 | GET | `/:code` | | `302` to the original URL and increments hits | `404` if unknown |
 
-Links are stored in an in-memory `Map`, so restarting the backend clears them by design.
+Links are stored in SQLite (see `backend/README.md` for `DB_PATH` and the persistent-volume requirement in production).
 
 ## Clone
 
