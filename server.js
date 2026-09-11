@@ -1,8 +1,44 @@
-const links = new Map();
+import { Database } from "bun:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
 
 const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 const PORT = Number.parseInt(Bun.env.PORT || "3000", 10);
 const PUBLIC_DIR = Bun.env.PUBLIC_DIR;
+const DB_PATH = Bun.env.DB_PATH || "snip.db";
+
+mkdirSync(dirname(DB_PATH), { recursive: true });
+
+const db = new Database(DB_PATH, { create: true });
+db.exec("PRAGMA journal_mode = WAL;");
+db.exec("PRAGMA busy_timeout = 5000;");
+db.exec(`
+  CREATE TABLE IF NOT EXISTS links (
+    code TEXT PRIMARY KEY,
+    url TEXT NOT NULL,
+    short_url TEXT NOT NULL,
+    hits INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  )
+`);
+
+const codeExistsStmt = db.prepare("SELECT 1 FROM links WHERE code = ?");
+const insertLinkStmt = db.prepare(
+  "INSERT INTO links (code, url, short_url, hits, created_at) VALUES (?, ?, ?, ?, ?)"
+);
+const getLinkStmt = db.prepare("SELECT * FROM links WHERE code = ?");
+const listLinksStmt = db.prepare("SELECT * FROM links ORDER BY rowid ASC");
+const incrementHitsStmt = db.prepare("UPDATE links SET hits = hits + 1 WHERE code = ?");
+
+function rowToLink(row) {
+  return {
+    code: row.code,
+    url: row.url,
+    shortUrl: row.short_url,
+    hits: row.hits,
+    createdAt: row.created_at,
+  };
+}
 
 function configuredBaseUrl() {
   if (Bun.env.BASE_URL) {
@@ -57,7 +93,7 @@ function randomCode() {
 function createCode() {
   let code = randomCode();
 
-  while (links.has(code)) {
+  while (codeExistsStmt.get(code)) {
     code = randomCode();
   }
 
@@ -164,12 +200,12 @@ const server = Bun.serve({
         createdAt: new Date().toISOString(),
       };
 
-      links.set(code, link);
+      insertLinkStmt.run(link.code, link.url, link.shortUrl, link.hits, link.createdAt);
       return json(link, 201);
     }
 
     if (request.method === "GET" && url.pathname === "/api/links") {
-      return json(Array.from(links.values()));
+      return json(listLinksStmt.all().map(rowToLink));
     }
 
     if (request.method === "GET") {
@@ -180,10 +216,10 @@ const server = Bun.serve({
       }
 
       const code = decodeURIComponent(url.pathname.slice(1));
-      const link = links.get(code);
+      const link = getLinkStmt.get(code);
 
       if (link) {
-        link.hits += 1;
+        incrementHitsStmt.run(code);
         return new Response(null, {
           status: 302,
           headers: {
