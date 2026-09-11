@@ -13,8 +13,11 @@ import { SnipLink, SnipService } from './snip.service';
 export class AppComponent implements OnInit {
   private readonly snip = inject(SnipService);
 
+  readonly pageSize = 10;
+
   readonly url = signal('');
   readonly links = signal<SnipLink[]>([]);
+  readonly page = signal(1);
   readonly latestLink = signal<SnipLink | null>(null);
   readonly error = signal('');
   readonly isLoading = signal(false);
@@ -27,6 +30,11 @@ export class AppComponent implements OnInit {
     }
 
     return !this.isHttpUrl(value);
+  });
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.links().length / this.pageSize)));
+  readonly pagedLinks = computed(() => {
+    const start = (this.page() - 1) * this.pageSize;
+    return this.links().slice(start, start + this.pageSize);
   });
 
   ngOnInit() {
@@ -49,6 +57,7 @@ export class AppComponent implements OnInit {
       next: (link) => {
         this.latestLink.set(link);
         this.links.update((links) => [link, ...links]);
+        this.page.set(1);
         this.url.set('');
       },
       error: (error: HttpErrorResponse) => {
@@ -61,11 +70,26 @@ export class AppComponent implements OnInit {
     this.loadLinks();
   }
 
+  goToPage(page: number) {
+    this.page.set(Math.min(Math.max(page, 1), this.totalPages()));
+  }
+
+  previousPage() {
+    this.goToPage(this.page() - 1);
+  }
+
+  nextPage() {
+    this.goToPage(this.page() + 1);
+  }
+
   private loadLinks() {
     this.isLoading.set(true);
     this.error.set('');
     this.snip.listLinks().pipe(finalize(() => this.isLoading.set(false))).subscribe({
-      next: (links) => this.links.set(links),
+      next: (links) => {
+        this.links.set(links);
+        this.page.set(1);
+      },
       error: () => this.error.set('Could not load links. Check the backend and try again.'),
     });
   }

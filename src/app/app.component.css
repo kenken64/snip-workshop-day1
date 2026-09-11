@@ -240,6 +240,19 @@ a {
   color: var(--muted);
 }
 
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.pager-status {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 680px) {
   .shell {
     width: min(100% - 24px, 1040px);
