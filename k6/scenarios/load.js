@@ -1,6 +1,6 @@
 // Average-load test: simulate typical expected production traffic.
 import { fullJourney } from '../lib/api.js';
-import { buildSummary } from '../lib/summary.js';
+import { buildSummary, SUMMARY_TREND_STATS } from '../lib/summary.js';
 
 const TARGET_VUS = __ENV.LOAD_VUS ? Number(__ENV.LOAD_VUS) : 20;
 
@@ -16,9 +16,10 @@ export const options = {
       ],
     },
   },
+  summaryTrendStats: SUMMARY_TREND_STATS,
   thresholds: {
     http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(95)<800'],
+    http_req_duration: ['p(95)<800', 'p(99)<1500'],
   },
 };
 

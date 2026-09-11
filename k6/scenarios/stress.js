@@ -1,6 +1,6 @@
 // Stress test: push well beyond normal load to see how the app degrades.
 import { fullJourney } from '../lib/api.js';
-import { buildSummary } from '../lib/summary.js';
+import { buildSummary, SUMMARY_TREND_STATS } from '../lib/summary.js';
 
 export const options = {
   scenarios: {
@@ -18,9 +18,10 @@ export const options = {
       ],
     },
   },
+  summaryTrendStats: SUMMARY_TREND_STATS,
   thresholds: {
     http_req_failed: ['rate<0.05'],
-    http_req_duration: ['p(95)<1500'],
+    http_req_duration: ['p(95)<1500', 'p(99)<3000'],
   },
 };
 

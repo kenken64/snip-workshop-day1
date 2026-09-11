@@ -2,7 +2,7 @@
 // find its capacity limit. No failure threshold on purpose - breaking is the
 // expected outcome; read the summary to see where errors/latency start to climb.
 import { fullJourney } from '../lib/api.js';
-import { buildSummary } from '../lib/summary.js';
+import { buildSummary, SUMMARY_TREND_STATS } from '../lib/summary.js';
 
 const TARGET_RPS = __ENV.BREAKPOINT_TARGET_RPS ? Number(__ENV.BREAKPOINT_TARGET_RPS) : 300;
 
@@ -17,6 +17,7 @@ export const options = {
       stages: [{ duration: '5m', target: TARGET_RPS }],
     },
   },
+  summaryTrendStats: SUMMARY_TREND_STATS,
 };
 
 export default function () {

@@ -2,7 +2,7 @@
 // leaks or slow degradation. The canonical k6 soak test runs for hours; the
 // default here is CI-friendly and can be scaled up with SOAK_MINUTES.
 import { fullJourney } from '../lib/api.js';
-import { buildSummary } from '../lib/summary.js';
+import { buildSummary, SUMMARY_TREND_STATS } from '../lib/summary.js';
 
 const SOAK_MINUTES = __ENV.SOAK_MINUTES ? Number(__ENV.SOAK_MINUTES) : 15;
 
@@ -18,9 +18,10 @@ export const options = {
       ],
     },
   },
+  summaryTrendStats: SUMMARY_TREND_STATS,
   thresholds: {
     http_req_failed: ['rate<0.01'],
-    http_req_duration: ['p(95)<800'],
+    http_req_duration: ['p(95)<800', 'p(99)<1500'],
   },
 };
 
