@@ -57,6 +57,15 @@ The workflow (`.github/workflows/k6-load-test.yml`) is **manual only** — it
 never runs on push or on a schedule, so it won't add load to the shared
 Railway instance unless someone asks for it.
 
+The target URL is never hardcoded in the workflow or the scripts. It comes
+from either the `base_url` input for that run, or — if left blank — a repo
+secret named **`SNIP_BASE_URL`**.
+
+**One-time setup:** add the secret under the repo's *Settings > Secrets and
+variables > Actions > New repository secret*, name it `SNIP_BASE_URL`, value
+`https://snip-workshop-day1-production-f431.up.railway.app` (or via
+`gh secret set SNIP_BASE_URL --body "https://..."`).
+
 1. Go to the repo's **Actions** tab.
 2. Select **k6 Load Test** in the left sidebar.
 3. Click **Run workflow**.
@@ -65,10 +74,13 @@ Railway instance unless someone asks for it.
      `all` runs every strategy, one after another (`max-parallel: 1`) against
      the same shared instance so results from one strategy aren't muddied by
      another running concurrently.
-   - **base_url**: defaults to
-     `https://snip-workshop-day1-production-f431.up.railway.app`; override to
-     point at a different environment.
+   - **base_url**: leave blank to use the `SNIP_BASE_URL` secret, or fill in
+     to point at a different environment for this run only.
 5. Click **Run workflow** to start it.
+
+If neither the input nor the secret is set, the run fails fast in the
+**Resolve target URL** step with a clear error instead of silently hitting a
+default.
 
 Once finished, open the run and download the **k6-report-\<type\>** artifact
 (one per strategy that ran) — it contains a self-contained HTML report you
@@ -76,15 +88,21 @@ can open locally in a browser.
 
 ## Running locally
 
+`BASE_URL` is required — the scripts throw immediately if it's missing,
+rather than falling back to a hardcoded URL:
+
 ```sh
 # any single strategy
 BASE_URL=https://snip-workshop-day1-production-f431.up.railway.app \
   k6 run k6/scenarios/smoke.js
 
 # tune a specific strategy
-LOAD_VUS=50 k6 run k6/scenarios/load.js
-SOAK_MINUTES=5 k6 run k6/scenarios/soak.js
-BREAKPOINT_TARGET_RPS=500 k6 run k6/scenarios/breakpoint.js
+BASE_URL=https://snip-workshop-day1-production-f431.up.railway.app \
+  LOAD_VUS=50 k6 run k6/scenarios/load.js
+BASE_URL=https://snip-workshop-day1-production-f431.up.railway.app \
+  SOAK_MINUTES=5 k6 run k6/scenarios/soak.js
+BASE_URL=https://snip-workshop-day1-production-f431.up.railway.app \
+  BREAKPOINT_TARGET_RPS=500 k6 run k6/scenarios/breakpoint.js
 ```
 
 Each run prints the usual k6 summary to the console and also writes

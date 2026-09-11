@@ -1,7 +1,12 @@
 import http from 'k6/http';
 import { check } from 'k6';
 
-export const BASE_URL = (__ENV.BASE_URL || 'https://snip-workshop-day1-production-f431.up.railway.app').replace(/\/+$/, '');
+if (!__ENV.BASE_URL) {
+  throw new Error(
+    'BASE_URL environment variable is required, e.g.: k6 run -e BASE_URL=https://your-app.up.railway.app k6/scenarios/smoke.js'
+  );
+}
+export const BASE_URL = __ENV.BASE_URL.replace(/\/+$/, '');
 
 // Real long URLs to shorten during the test. The backend stores links in an
 // in-memory Map (cleared on every restart/redeploy), so we always POST these

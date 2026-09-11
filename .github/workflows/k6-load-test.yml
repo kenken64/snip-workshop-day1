@@ -17,9 +17,8 @@ on:
           - breakpoint
           - all
       base_url:
-        description: 'Target base URL'
+        description: 'Target base URL (leave blank to use the SNIP_BASE_URL repo secret)'
         required: false
-        default: 'https://snip-workshop-day1-production-f431.up.railway.app'
 
 jobs:
   resolve-matrix:
@@ -47,12 +46,25 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Resolve target URL
+        id: url
+        env:
+          INPUT_URL: ${{ inputs.base_url }}
+          SECRET_URL: ${{ secrets.SNIP_BASE_URL }}
+        run: |
+          URL="${INPUT_URL:-$SECRET_URL}"
+          if [ -z "$URL" ]; then
+            echo "::error::No base_url input given and the SNIP_BASE_URL repo secret is not set. Add it under Settings > Secrets and variables > Actions, or pass base_url when running this workflow."
+            exit 1
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
       - name: Run k6 ${{ matrix.type }} test
         uses: grafana/k6-action@v0.3.1
         with:
           filename: k6/scenarios/${{ matrix.type }}.js
         env:
-          BASE_URL: ${{ inputs.base_url }}
+          BASE_URL: ${{ steps.url.outputs.url }}
 
       - name: Upload HTML report
         if: always()
