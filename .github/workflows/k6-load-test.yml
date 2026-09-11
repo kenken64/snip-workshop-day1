@@ -1,0 +1,63 @@
+name: k6 Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Load test strategy to run'
+        required: true
+        type: choice
+        default: smoke
+        options:
+          - smoke
+          - load
+          - stress
+          - spike
+          - soak
+          - breakpoint
+          - all
+      base_url:
+        description: 'Target base URL'
+        required: false
+        default: 'https://snip-workshop-day1-production-f431.up.railway.app'
+
+jobs:
+  resolve-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      types: ${{ steps.set.outputs.types }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ inputs.test_type }}" = "all" ]; then
+            echo 'types=["smoke","load","stress","spike","soak","breakpoint"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'types=["${{ inputs.test_type }}"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  k6-test:
+    needs: resolve-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        type: ${{ fromJson(needs.resolve-matrix.outputs.types) }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run k6 ${{ matrix.type }} test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: k6/scenarios/${{ matrix.type }}.js
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-report-${{ matrix.type }}
+          path: ${{ matrix.type }}-report.html
+          if-no-files-found: warn
